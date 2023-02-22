@@ -6,27 +6,15 @@ import {
   ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  TouchableOpacity,
+  TouchableHighlight,
 } from 'react-native';
 import Swiper from 'react-native-swiper';
 import {deviceWidthDp, scale} from '../util/P2D';
-import SingleFoodComponent, {FoodType} from './SingleFoodComponent';
-
-type Props = {
-  onAddFood: (amount: number) => void;
-};
-type State = {
-  // selectedFood: [FoodType];
-  selectHamberger: boolean;
-  selectCoffee: boolean;
-  selectPatato: boolean;
-  // currentPage: number;
-  star1Left: number;
-  star1Top: number;
-  star2Left: number;
-  star2Top: number;
-  star3Left: number;
-  star3Top: number;
-};
+import SingleFoodComponent, {
+  AnimationState,
+  FoodType,
+} from './SingleFoodComponent';
 
 type SwiperProps = {
   onScroll: (ratio: number, currentPage: number, targetPage: number) => void;
@@ -34,20 +22,26 @@ type SwiperProps = {
   onAddBtnPress: (amount: number) => void;
   allFoods: Array<FoodType>;
 };
+
 class SwiperWrapper extends Component<SwiperProps> {
   scrollBeginContentOffsetX = 0;
   currentPage = 0;
+  isScrolling = false;
+
+  componentRefs: Array<SingleFoodComponent> = [];
+
+  constructor(props: SwiperProps) {
+    super(props);
+  }
+
   shouldComponentUpdate(nextProps: Readonly<SwiperProps>): boolean {
-    if (this.props.allFoods.length === nextProps.allFoods.length) {
-      for (var i = 0; i < this.props.allFoods.length; i++) {
-        if (this.props.allFoods[i] !== nextProps.allFoods[i]) {
-          return true;
-        }
-      }
-      return false;
-    } else {
-      return true;
-    }
+    // console.log('isScrolling', this.isScrolling );
+    return false;
+    // if (this.isScrolling) {
+    //   return true;
+    // } else {
+    //   return false;
+    // }
   }
 
   render() {
@@ -63,6 +57,7 @@ class SwiperWrapper extends Component<SwiperProps> {
         style={styles.foodScrollView}
         onScroll={this.onScroll}
         onScrollBeginDrag={this.onScrollBeginDrag}
+        onMomentumScrollEnd={this.onScrollEnd}
         onIndexChanged={(index: number) => {
           this.currentPage = index;
           console.log('currentPage=' + index);
@@ -74,6 +69,9 @@ class SwiperWrapper extends Component<SwiperProps> {
               key={`Food-${index}`}
               type={index}
               onAddBtnPress={this.props.onAddBtnPress}
+              ref={(ref: SingleFoodComponent) => {
+                this.componentRefs[index] = ref;
+              }}
             />
           );
         })}
@@ -85,7 +83,17 @@ class SwiperWrapper extends Component<SwiperProps> {
     //e.nativeEvent.contentOffset.x是内容偏移量，要减去一个屏幕的宽度才是滑动的偏移量
     this.scrollBeginContentOffsetX =
       e.nativeEvent.contentOffset.x - deviceWidthDp;
-    console.log('scrollBeginContentOffsetX=' + this.scrollBeginContentOffsetX);
+    this.isScrolling = true;
+    // console.log('scrollBeginContentOffsetX=' + this.scrollBeginContentOffsetX);
+  };
+
+  onScrollEnd = () => {
+    //e.nativeEvent.contentOffset.x是内容偏移量，要减去一个屏幕的宽度才是滑动的偏移量
+    this.isScrolling = false;
+    this.componentRefs.forEach((ref: SingleFoodComponent) => {
+      ref.setAnimationState(AnimationState.None, 0);
+    });
+    console.log('scroll End');
   };
 
   onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -114,9 +122,36 @@ class SwiperWrapper extends Component<SwiperProps> {
     const ratio = 1 - Math.abs(offsetX - targetOffsetX) / deviceWidthDp;
     console.log('ratio', ratio);
     this.props.onScroll(ratio, this.currentPage, adjustedTargetPage);
+
+    for (var i = 0; i < this.componentRefs.length; i++) {
+      let componentRef = this.componentRefs[i];
+      if (adjustedTargetPage === i && this.isScrolling) {
+        componentRef.setAnimationState(AnimationState.FadeIn, ratio);
+      } else if (this.currentPage === i && this.isScrolling) {
+        componentRef.setAnimationState(AnimationState.FadeOut, ratio);
+      } else {
+        // componentRef.setAnimationState(AnimationState.None, animateRate);
+      }
+    }
   };
 }
 
+type Props = {
+  onAddFood: (amount: number) => void;
+};
+type State = {
+  // selectedFood: [FoodType];
+  selectHamberger: boolean;
+  selectCoffee: boolean;
+  selectPatato: boolean;
+  star1Left: number;
+  star1Top: number;
+  star2Left: number;
+  star2Top: number;
+  star3Left: number;
+  star3Top: number;
+  addBtnOpacity: number;
+};
 class Body extends Component<Props, State> {
   priceMap = {
     [FoodType.Patato]: 4,
@@ -133,6 +168,8 @@ class Body extends Component<Props, State> {
   allFoods = [FoodType.Patato, FoodType.Coffee, FoodType.Hamberger];
 
   amount = 0;
+
+  currentPage = 0;
 
   star1Styles = [star1Style.patato, star1Style.coffee, star1Style.hamberger];
 
@@ -153,6 +190,7 @@ class Body extends Component<Props, State> {
       star2Top: star2Style.patato.top,
       star3Left: star3Style.patato.left,
       star3Top: star3Style.patato.top,
+      addBtnOpacity: 1,
     };
   }
 
@@ -163,7 +201,7 @@ class Body extends Component<Props, State> {
     this.props.onAddFood(this.amount);
   };
 
-  renderStartWithAmimationRatio = (
+  renderStarAndBtnWithAmimationRatio = (
     ratio: number,
     currentPage: number,
     targetPage: number,
@@ -177,6 +215,11 @@ class Body extends Component<Props, State> {
     const star3From = this.star3Styles[currentPage];
     const star3To = this.star3Styles[targetPage];
 
+    // console.log('ratio', ratio);
+
+    const btnOpacity =
+      ratio <= 0.25 ? 1 - ratio * 4 : ratio >= 0.75 ? (ratio - 0.5) * 4 : 0;
+    // console.log('btnOpacity', btnOpacity);
     this.setState({
       star1Left: (star1To.left - star1From.left) * ratio + star1From.left,
       star1Top: (star1To.top - star1From.top) * ratio + star1From.top,
@@ -184,6 +227,7 @@ class Body extends Component<Props, State> {
       star2Top: (star2To.top - star2From.top) * ratio + star2From.top,
       star3Left: (star3To.left - star3From.left) * ratio + star3From.left,
       star3Top: (star3To.top - star3From.top) * ratio + star3From.top,
+      addBtnOpacity: btnOpacity,
     });
   };
 
@@ -218,6 +262,18 @@ class Body extends Component<Props, State> {
     );
   };
 
+  renderAddBtn = () => {
+    return (
+      <TouchableHighlight
+        onPress={() => {
+          this.onAddBtnPress(this.currentPage);
+        }}
+        style={[styles.addBtn, {opacity: this.state.addBtnOpacity}]}>
+        <Image source={require('../images/add.png')} style={styles.addImage} />
+      </TouchableHighlight>
+    );
+  };
+
   renderFoods = () => {
     const styles3 = [styles.hambergerIn3, styles.coffeeIn3, styles.patatoIn3];
     if (
@@ -246,13 +302,15 @@ class Body extends Component<Props, State> {
     return (
       <ScrollView key="body" style={styles.bodyContainer}>
         {this.renderStars()}
-
+        {this.renderAddBtn()}
         <SwiperWrapper
           allFoods={this.allFoods}
-          onScroll={this.renderStartWithAmimationRatio}
+          onScroll={this.renderStarAndBtnWithAmimationRatio}
           onAddBtnPress={this.onAddBtnPress}
+          onIndexChanged={(index: number) => {
+            this.currentPage = index;
+          }}
         />
-
         <View style={styles.foodBox}>
           <Image
             style={styles.plateImage}
@@ -272,6 +330,18 @@ const styles = StyleSheet.create({
   foodScrollView: {
     // width: deviceWidthDp * 3,
     height: 360,
+  },
+
+  addBtn: {
+    position: 'absolute',
+    right: 48,
+    top: 178,
+    width: 59,
+    height: 59,
+    padding: 0,
+  },
+  addImage: {
+    transform: [{translateX: -15}],
   },
 
   foodBox: {
