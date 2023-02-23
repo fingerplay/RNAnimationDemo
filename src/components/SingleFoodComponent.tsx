@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View, StyleSheet, Image, Text} from 'react-native';
+import {View, StyleSheet, Image, Text, LayoutChangeEvent} from 'react-native';
 import {deviceWidthDp, scale} from '../util/P2D';
 
 export type EnumDictionary<T extends string | symbol | number, U> = {
@@ -21,6 +21,7 @@ export enum AnimationState {
 type Props = {
   type: FoodType;
   onAddBtnPress: (type: FoodType) => void;
+  onGetRef: (ref: SingleFoodComponent) => void;
 };
 
 type State = {
@@ -41,6 +42,16 @@ class SingleFoodComponent extends Component<Props, State> {
     };
   }
 
+  componentDidMount(): void {
+    this.props.onGetRef && this.props.onGetRef(this.ref);
+  }
+
+  ref = undefined;
+
+  setRef = (ref: any) => {
+    this.ref = ref;
+  };
+
   shouldComponentUpdate(
     nextProps: Readonly<Props>,
     nextState: Readonly<State>,
@@ -57,7 +68,7 @@ class SingleFoodComponent extends Component<Props, State> {
   }
 
   renderPatatoImage = () => {
-    console.log('renderPatatoImage');
+    console.log('renderPatatoImage,this.state.textOpacity=',this.state.textOpacity);
     return (
       <View>
         <Image
@@ -89,7 +100,7 @@ class SingleFoodComponent extends Component<Props, State> {
   };
 
   renderCoffeeImage = () => {
-    // console.log('renderCoffeeImage');
+    console.log('renderCoffeeImage');
 
     return (
       <View>
@@ -140,7 +151,7 @@ class SingleFoodComponent extends Component<Props, State> {
   };
 
   setAnimationState(animationState: AnimationState, animationRate: number) {
-    console.log('type:'+ this.props.type+'  state:'+animationState+'  rate:'+animationRate);
+    // console.log('type:'+ this.props.type+'  state:'+animationState+'  rate:'+animationRate);
     var translateY = 0;
     var opacity = 1;
     const textRate = animationRate <= 0.25 ? animationRate * 4 : 1;
@@ -151,7 +162,7 @@ class SingleFoodComponent extends Component<Props, State> {
       translateY = 40 * textRate;
       opacity = 1 - textRate;
     }
-    console.log('type:'+ this.props.type+'  translateY:'+translateY+'  opacity:'+opacity);
+    // console.log('type:'+ this.props.type+'  translateY:'+translateY+'  opacity:'+opacity);
     if (animationState !== AnimationState.None) {
       this.setState({textTranslateY: translateY, textOpacity: opacity});
     }
@@ -191,7 +202,7 @@ class SingleFoodComponent extends Component<Props, State> {
     } else {
       renderImage = this.renderHambergerImage;
     }
-    console.log('render singleFoodComponent,type=' + this.props.type);
+    // console.log('render singleFoodComponent,key='+ this.key +',type=' + this.props.type);
 
     return (
       <View key="body" style={styles.bodyContainer}>
