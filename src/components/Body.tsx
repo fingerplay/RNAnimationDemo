@@ -141,9 +141,9 @@ type Props = {
 };
 type State = {
   // selectedFood: [FoodType];
-  selectHamberger: boolean;
-  selectCoffee: boolean;
-  selectPatato: boolean;
+  coffeeLeft: number;
+  hambergerLeft: number;
+  patatoLeft: number;
   star1Left: number;
   star1Top: number;
   star2Left: number;
@@ -171,6 +171,8 @@ class Body extends Component<Props, State> {
 
   currentPage = 0;
 
+  selectedFoods: Array<FoodType> = [];
+
   star1Styles = [star1Style.patato, star1Style.coffee, star1Style.hamberger];
 
   star2Styles = [star2Style.patato, star2Style.coffee, star2Style.hamberger];
@@ -180,10 +182,9 @@ class Body extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      selectCoffee: true,
-      selectHamberger: true,
-      selectPatato: true,
-      // currentPage: 0,
+      coffeeLeft: 0,
+      hambergerLeft: 0,
+      patatoLeft: 0,
       star1Left: star1Style.patato.left,
       star1Top: star1Style.patato.top,
       star2Left: star2Style.patato.left,
@@ -196,6 +197,30 @@ class Body extends Component<Props, State> {
 
   onAddBtnPress = (index: FoodType) => {
     console.log('add foot index:' + index);
+    if (this.selectedFoods.length >= 3) {
+      return;
+    } else if (this.selectedFoods.length === 2) {
+      const food = this.allFoods[index];
+      if (this.selectedFoods.find(item => item === food) == undefined) {
+        if (food === FoodType.Patato) {
+          this.selectedFoods.push(food);
+        } else if (food === FoodType.Coffee) {
+          this.selectedFoods.splice(1, 0, food);
+        } else {
+          this.selectedFoods.unshift(food);
+        }
+      } else {
+        return;
+      }
+    } else {
+      const food = this.allFoods[index];
+      if (this.selectedFoods.find(item => item === food) === undefined) {
+        this.selectedFoods.push(food);
+      } else {
+        return;
+      }
+    }
+
     this.amount = this.amount + this.priceMap[index];
     console.log('amount=' + this.amount);
     this.props.onAddFood(this.amount);
@@ -276,17 +301,13 @@ class Body extends Component<Props, State> {
 
   renderFoods = () => {
     const styles3 = [styles.hambergerIn3, styles.coffeeIn3, styles.patatoIn3];
-    if (
-      this.state.selectCoffee &&
-      this.state.selectHamberger &&
-      this.state.selectPatato
-    ) {
+    // if (this.selectedFoods.length === 3) {
       return (
         <Fragment>
-          {this.allFoods.map((index: number) => {
+          {this.selectedFoods.map((index: number) => {
             return (
               <Image
-                source={this.imageMap[this.allFoods[index]]}
+                source={this.imageMap[this.selectedFoods[index]]}
                 style={styles3[index]}
                 key={`selectedFood-${index}`}
               />
@@ -294,7 +315,7 @@ class Body extends Component<Props, State> {
           })}
         </Fragment>
       );
-    }
+    // }
   };
 
   render() {
