@@ -21,7 +21,6 @@ export enum AnimationState {
 type Props = {
   type: FoodType;
   onAddBtnPress: (type: FoodType) => void;
-  onGetRef: (ref: SingleFoodComponent) => void;
 };
 
 type State = {
@@ -42,16 +41,6 @@ class SingleFoodComponent extends Component<Props, State> {
     };
   }
 
-  componentDidMount(): void {
-    this.props.onGetRef && this.props.onGetRef(this.ref);
-  }
-
-  ref = undefined;
-
-  setRef = (ref: any) => {
-    this.ref = ref;
-  };
-
   shouldComponentUpdate(
     nextProps: Readonly<Props>,
     nextState: Readonly<State>,
@@ -68,7 +57,10 @@ class SingleFoodComponent extends Component<Props, State> {
   }
 
   renderPatatoImage = () => {
-    console.log('renderPatatoImage,this.state.textOpacity=',this.state.textOpacity);
+    console.log(
+      'renderPatatoImage,this.state.imageTranslateY=',
+      this.state.imageTranslateY,
+    );
     return (
       <View>
         <Image
@@ -151,7 +143,7 @@ class SingleFoodComponent extends Component<Props, State> {
   };
 
   setAnimationState(animationState: AnimationState, animationRate: number) {
-    // console.log('type:'+ this.props.type+'  state:'+animationState+'  rate:'+animationRate);
+    console.log('type:'+ this.props.type+'  state:'+animationState+'  rate:'+animationRate);
     var translateY = 0;
     var opacity = 1;
     const textRate = animationRate <= 0.25 ? animationRate * 4 : 1;
@@ -171,7 +163,7 @@ class SingleFoodComponent extends Component<Props, State> {
       if (animationState === AnimationState.FadeIn) {
         this.setState({imageTranslateY: -50 * (animationRate - 1)});
       } else if (animationState === AnimationState.FadeOut) {
-        this.setState({imageTranslateY: -50 * animationRate});
+        this.setState({imageTranslateY: 50 * animationRate});
       }
     }
 

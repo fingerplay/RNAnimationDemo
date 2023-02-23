@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 
-import {scale} from '../util/P2D';
+import {deviceWidthDp, scale} from '../util/P2D';
 import {FoodType} from './SingleFoodComponent';
 import {SwiperWrapper} from './SwiperWrapper';
 
@@ -39,16 +39,38 @@ class Body extends Component<Props, State> {
   };
 
   allFoods = [FoodType.Patato, FoodType.Coffee, FoodType.Hamberger];
-  foodTranslateX = {
+  addBtnLeft = deviceWidthDp - styles.addBtn.right - styles.addBtn.width;
+  foodTranslateXY = {
+    [FoodType.Patato]: new Animated.ValueXY({
+      x:
+        this.addBtnLeft -
+        styles.patatoIn3.left -
+        (deviceWidthDp - 276) / 2 -
+        20,
+      y: -styles.patatoIn3.top - 150,
+    }),
+    [FoodType.Coffee]: new Animated.ValueXY({
+      x:
+        this.addBtnLeft -
+        styles.coffeeIn3.left -
+        (deviceWidthDp - 276) / 2 -
+        40,
+      y: -styles.coffeeIn3.top - 150,
+    }),
+    [FoodType.Hamberger]: new Animated.ValueXY({
+      x:
+        this.addBtnLeft -
+        styles.hambergerIn3.left -
+        (deviceWidthDp - 276) / 2 -
+        50,
+      y: -styles.hambergerIn3.top - 150,
+    }),
+  };
+  foodScaleMap = {
     [FoodType.Patato]: new Animated.Value(0),
     [FoodType.Coffee]: new Animated.Value(0),
     [FoodType.Hamberger]: new Animated.Value(0),
   };
-  // translateXMap = {
-  //   [FoodType.Patato]: 0,
-  //   [FoodType.Coffee]: 0,
-  //   [FoodType.Hamberger]: 0,
-  // };
 
   amount = 0;
 
@@ -95,7 +117,6 @@ class Body extends Component<Props, State> {
       }
     } else {
       const food = this.allFoods[index];
-      console.log('food', food);
       if (this.selectedFoods.indexOf(food) === -1) {
         if (this.selectedFoods.length === 1) {
           if (this.selectedFoods[0] < food) {
@@ -110,41 +131,50 @@ class Body extends Component<Props, State> {
         return;
       }
     }
-
-    var toValues;
-    if (this.selectedFoods.length === 3) {
-      toValues = [-50, 0, 50];
-    } else if (this.selectedFoods.length === 2) {
-      toValues = [-40, 40, 0];
-    } else {
-      toValues = [-10, 0, 10];
-    }
-    console.log(this.selectedFoods);
-    
-    var animations = [];
-    for (var i = 0; i < this.selectedFoods.length; i++) {
-      const food = this.selectedFoods[i];
-      const fromValue = this.foodTranslateX[food];
-      console.log(
-        'move item:' + food + ' from:',
-        // fromValue._value,
-        ' to:' + toValues[i],
-      );
-
-      animations.push(
-        Animated.timing(fromValue, {
-          toValue: toValues[i],
-          useNativeDriver: true,
-          duration: 200,
-        }),
-      );
-      // this.translateXMap[food] = toValues[i];
-    }
-    Animated.parallel(animations, {stopTogether: false}).start();
+    this.addFoodAnimations(this.allFoods[index]);
 
     this.amount = this.amount + this.priceMap[index];
     console.log('amount=' + this.amount);
     this.props.onAddFood(this.amount);
+  };
+
+  addFoodAnimations = (newAddFood: FoodType) => {
+    var animations: Array<Animated.CompositeAnimation> = [];
+    var translateXValues;
+    if (this.selectedFoods.length === 3) {
+      translateXValues = [-50, 0, 50];
+    } else if (this.selectedFoods.length === 2) {
+      translateXValues = [-30, 30, 0];
+    } else {
+      translateXValues = [0, 0, 0];
+    }
+    console.log(this.selectedFoods);
+    for (var i = 0; i < this.selectedFoods.length; i++) {
+      const food = this.selectedFoods[i];
+      var fromValue = this.foodTranslateXY[food];
+      // console.log(
+      //   'move item:' + food + ' from:',
+      //   // fromValue._value,
+      //   ' to:' + translateXValues[i],
+      // );
+
+      animations.push(
+        Animated.timing(fromValue, {
+          toValue: {x: translateXValues[i], y: 0},
+          useNativeDriver: true,
+          duration: 200,
+        }),
+      );
+    }
+    animations.push(
+      Animated.timing(this.foodScaleMap[newAddFood], {
+        toValue: 1,
+        useNativeDriver: true,
+        duration: 200,
+      }),
+    );
+
+    Animated.parallel(animations, {stopTogether: false}).start();
   };
 
   renderStarAndBtnWithAmimationRatio = (
@@ -228,13 +258,19 @@ class Body extends Component<Props, State> {
     };
     return (
       <Fragment>
-        {this.selectedFoods.map((item: FoodType, index: number) => {
+        {this.selectedFoods.map((item: FoodType) => {
           return (
             <Animated.Image
               source={this.imageMap[item]}
               style={[
                 styles3[item],
-                {transform: [{translateX: this.foodTranslateX[item]}]},
+                {
+                  transform: [
+                    {translateX: this.foodTranslateXY[item].x},
+                    {translateY: this.foodTranslateXY[item].y},
+                    {scale: this.foodScaleMap[item]},
+                  ],
+                },
               ]}
               key={`selectedFood-${item}`}
             />
