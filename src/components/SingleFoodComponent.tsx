@@ -36,7 +36,7 @@ class SingleFoodComponent extends Component<Props, State> {
     this.state = {
       textTranslateY: 0,
       textOpacity: 1,
-      imageTranslateY: 0,
+      imageTranslateY: props.type === FoodType.Hamberger ? -40 : 0,
       waterScale: 0,
     };
   }

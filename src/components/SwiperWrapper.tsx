@@ -128,12 +128,11 @@ export class SwiperWrapper extends Component<SwiperProps> {
     //   towardRight = false;
     // }
     const currentPageExtend = this.scrollBeginContentOffsetX / deviceWidthDp;
-    const targetPage = towardRight
-      ? this.currentPage + 1
-      : this.currentPage - 1;
     var targetPageExtend = towardRight
       ? currentPageExtend + 1
       : currentPageExtend - 1;
+
+    const targetPage = targetPageExtend - 1;
     var adjustedTargetPage = targetPage;
     if (targetPage >= 3) {
       adjustedTargetPage = targetPage - 3;
