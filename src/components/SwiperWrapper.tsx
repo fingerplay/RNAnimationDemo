@@ -109,11 +109,13 @@ export class SwiperWrapper extends Component<SwiperProps> {
     ) {
       return;
     }
-
+    var pageDiff = 0;
     if (offsetX < this.scrollBeginContentOffsetX - deviceWidthDp) {
       offsetX = offsetX + deviceWidthDp * 3;
+      pageDiff = 3;
     } else if (offsetX > this.scrollBeginContentOffsetX + deviceWidthDp) {
       offsetX = offsetX - deviceWidthDp * 3;
+      pageDiff = -3;
     }
 
     var towardRight =
@@ -127,7 +129,7 @@ export class SwiperWrapper extends Component<SwiperProps> {
     // if (offsetX === 0 && (offsetX < 0 || offsetX > deviceWidthDp * 4)) {
     //   towardRight = false;
     // }
-    const currentPageExtend = this.scrollBeginContentOffsetX / deviceWidthDp;
+    const currentPageExtend = Math.ceil(this.scrollBeginContentOffsetX / deviceWidthDp);
     var targetPageExtend = towardRight
       ? currentPageExtend + 1
       : currentPageExtend - 1;
@@ -151,9 +153,10 @@ export class SwiperWrapper extends Component<SwiperProps> {
 
     for (var i = 0; i < this.componentRefs.length; i++) {
       let componentRef = this.componentRefs[i];
-      if (targetPageExtend === i && this.isScrolling) {
+      
+      if ( targetPageExtend - pageDiff === i ) {
         componentRef.setAnimationState(AnimationState.FadeIn, ratio);
-      } else if (currentPageExtend === i && this.isScrolling) {
+      } else if ( currentPageExtend - pageDiff === i ) {
         componentRef.setAnimationState(AnimationState.FadeOut, ratio);
       } else {
         // componentRef.setAnimationState(AnimationState.None, animateRate);
